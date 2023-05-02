@@ -109,3 +109,6 @@ ENV/
 
 # Emacs
 *~
+
+# test reports
+reports

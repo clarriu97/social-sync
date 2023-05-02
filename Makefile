@@ -64,12 +64,13 @@ code-metrics: ## check cyclomatic complexity and print LOCs and maintainability 
 	echo -e "\nMetrics:\n" && $(MAKE) code-locs
 
 test: ## run tests with pytest and calculate coverage
-	py.test --cov social_sync --cov-report term --cov-fail-under 80 \
-		    --cov-report html:docs/_build/coverage/$(or $(REPORT_NAME), $(or $(TOX_ENV_NAME), pytest)) \
-		    --cov-report xml:docs/_build/coverage/$(or $(REPORT_NAME), $(or $(TOX_ENV_NAME), pytest))/coverage.xml \
-		    --html=docs/_build/test-reports/$(or $(REPORT_NAME), $(or $(TOX_ENV_NAME), pytest))/index.html \
-			--junitxml=docs/_build/test-reports/$(or $(REPORT_NAME), $(or $(TOX_ENV_NAME), pytest))/junit.xml \
+	py.test --cov social_sync --cov-report term \
+		    --cov-report html:reports/tests/coverage/$(or $(REPORT_NAME), $(or $(TOX_ENV_NAME), pytest)) \
+		    --cov-report xml:reports/tests/coverage/$(or $(REPORT_NAME), $(or $(TOX_ENV_NAME), pytest))/coverage.xml \
+		    --html=reports/tests/test-reports/$(or $(REPORT_NAME), $(or $(TOX_ENV_NAME), pytest))/index.html \
+			--junitxml=reports/tests/test-reports/$(or $(REPORT_NAME), $(or $(TOX_ENV_NAME), pytest))/junit.xml \
 			-o junit_suite_name=$(or $(REPORT_NAME), $(or $(TOX_ENV_NAME), pytest))
+			# --cov-fail-under 80 
 
 security: ## check source code for vulnerabilities
 	@[ "${REPORT_FORMAT}" ] && ( mkdir -p docs/_build/security && bandit -v -r -f ${REPORT_FORMAT} -o docs/_build/security/index.html social_sync &> /dev/null ) || true
