@@ -80,7 +80,6 @@ check-dependencies: ## check dependencies for vulnerabilities using safety
 
 docs: ## generate project docs
 	rm -rf site && mkdir -p site/reference/api
-	python docs/generate_openapi.py
 	mkdocs build
 
 docs-serve: ## starts a server with the docs using mkdocs
