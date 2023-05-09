@@ -4,3 +4,4 @@ tweepy
 TikTokApi
 google-api-python-client
 structlog
+oauth2client
