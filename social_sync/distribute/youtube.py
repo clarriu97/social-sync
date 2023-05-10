@@ -10,31 +10,20 @@ from apiclient.errors import HttpError
 from apiclient.http import MediaFileUpload
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.file import Storage
-from oauth2client.tools import argparser, run_flow
+from oauth2client.tools import run_flow
 
 from social_sync.entities import YoutubeUploadRequest
 from social_sync import youtube_categories
 
 
-# Explicitly tell the underlying HTTP transport library not to retry, since
-# we are handling retry logic ourselves.
 httplib2.RETRIES = 1
-
-# Maximum number of times to retry before giving up.
 MAX_RETRIES = 10
-
-# Always retry when these exceptions are raised.
 RETRIABLE_EXCEPTIONS = (httplib2.HttpLib2Error, IOError)
-
-# Always retry when an apiclient.errors.HttpError with one of these status
-# codes is raised.
 RETRIABLE_STATUS_CODES = [500, 502, 503, 504]
-
-# This OAuth 2.0 access scope allows an application to upload files to the
-# authenticated user's YouTube channel, but doesn't allow other types of access.
 YOUTUBE_UPLOAD_SCOPE = "https://www.googleapis.com/auth/youtube.upload"
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
+
 
 def _get_authenticated_service(upload_request: YoutubeUploadRequest):
     MISSING_CLIENT_SECRETS_MESSAGE = f"""
@@ -82,29 +71,15 @@ def _initialize_upload(youtube, options):
         }
     }
 
-    # Call the API's videos.insert method to create and upload the video.
     insert_request = youtube.videos().insert(
         part=",".join(body.keys()),
         body=body,
-        # The chunksize parameter specifies the size of each chunk of data, in
-        # bytes, that will be uploaded at a time. Set a higher value for
-        # reliable connections as fewer chunks lead to faster uploads. Set a lower
-        # value for better recovery on less reliable connections.
-        #
-        # Setting "chunksize" equal to -1 in the code below means that the entire
-        # file will be uploaded in a single HTTP request. (If the upload fails,
-        # it will still be retried where it left off.) This is usually a best
-        # practice, but if you're using Python older than 2.6 or if you're
-        # running on App Engine, you should set the chunksize to something like
-        # 1024 * 1024 (1 megabyte).
         media_body=MediaFileUpload(options.file, chunksize=-1, resumable=True)
     )
 
     _resumable_upload(insert_request)
 
 
-# This method implements an exponential backoff strategy to resume a
-# failed upload.
 def _resumable_upload(insert_request):
     response = None
     error = None

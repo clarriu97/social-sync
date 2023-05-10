@@ -11,4 +11,4 @@ class YoutubeUploadRequest(BaseModel):
     keywords: str = ""
     privacy: str = "private"
     file: str
-    client_secrets_file: str = "client_secrets.json"
+    client_secrets_file: str
