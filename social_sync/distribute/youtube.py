@@ -3,6 +3,7 @@ import httplib2
 import os
 import sys
 import time
+import click
 
 from apiclient.discovery import build
 from apiclient.errors import HttpError
@@ -10,6 +11,9 @@ from apiclient.http import MediaFileUpload
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.file import Storage
 from oauth2client.tools import argparser, run_flow
+
+from social_sync.entities import YoutubeUploadRequest
+from social_sync import youtube_categories
 
 
 # Explicitly tell the underlying HTTP transport library not to retry, since
@@ -61,10 +65,8 @@ For more information about the client_secrets.json file format, please visit:
 https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
 """
 
-VALID_PRIVACY_STATUSES = ("public", "private", "unlisted")
 
-
-def get_authenticated_service(args):
+def _get_authenticated_service(args):
     flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE,
                                    scope=YOUTUBE_UPLOAD_SCOPE,
                                    message=MISSING_CLIENT_SECRETS_MESSAGE)
@@ -79,22 +81,22 @@ def get_authenticated_service(args):
                  http=credentials.authorize(httplib2.Http()))
 
 
-def initialize_upload(youtube, options):
+def _initialize_upload(youtube, options):
     tags = None
     if options.keywords:
         tags = options.keywords.split(",")
 
-    body = dict(
-        snippet=dict(
-            title=options.title,
-            description=options.description,
-            tags=tags,
-            categoryId=options.category
-        ),
-        status=dict(
-            privacyStatus=options.privacyStatus
-        )
-    )
+    body = {
+        "snippet": {
+            "title": options.title,
+            "description": options.description,
+            "tags": tags,
+            "categoryId": options.category
+        },
+        "status": {
+            "privacyStatus": options.privacy
+        }
+    }
 
     # Call the API's videos.insert method to create and upload the video.
     insert_request = youtube.videos().insert(
@@ -114,12 +116,12 @@ def initialize_upload(youtube, options):
         media_body=MediaFileUpload(options.file, chunksize=-1, resumable=True)
     )
 
-    resumable_upload(insert_request)
+    _resumable_upload(insert_request)
 
 
 # This method implements an exponential backoff strategy to resume a
 # failed upload.
-def resumable_upload(insert_request):
+def _resumable_upload(insert_request):
     response = None
     error = None
     retry = 0
@@ -151,25 +153,34 @@ def resumable_upload(insert_request):
             time.sleep(sleep_seconds)
 
 
-if __name__ == '__main__':
-    argparser.add_argument("--file", required=True, help="Video file to upload")
-    argparser.add_argument("--title", help="Video title", default="Test Title")
-    argparser.add_argument("--description", help="Video description",
-                           default="Test Description")
-    argparser.add_argument("--category", default="22",
-                           help="Numeric video category. " +
-                           "See https://developers.google.com/youtube/v3/docs/videoCategories/list")
-    argparser.add_argument("--keywords", help="Video keywords, comma separated",
-                           default="")
-    argparser.add_argument("--privacyStatus", choices=VALID_PRIVACY_STATUSES,
-                           default=VALID_PRIVACY_STATUSES[0], help="Video privacy status.")
-    args = argparser.parse_args()
-
-    if not os.path.exists(args.file):
-        exit("Please specify a valid file using the --file= parameter.")
-
-    youtube = get_authenticated_service(args)
+def upload_video(upload_request: YoutubeUploadRequest):
+    if not os.path.exists(upload_request.file):
+        raise FileNotFoundError(f"File {upload_request.file} not found")
+    youtube = _get_authenticated_service(upload_request)
     try:
-        initialize_upload(youtube, args)
+        _initialize_upload(youtube, upload_request)
     except HttpError as e:
         print(f"An HTTP error {e.resp.status} occurred:\n{e.content}")
+
+
+@click.command()
+@click.option("--file", required=True, help="Video file to upload")
+@click.option("--title", help="Video title", default="Test Title")
+@click.option("--description", help="Video description", default="Test Description")
+@click.option("--category", default=youtube_categories.ENTERTAINMENT, help="Numeric video category. " + "See https://developers.google.com/youtube/v3/docs/videoCategories/list")
+@click.option("--keywords", help="Video keywords, comma separated", default="")
+@click.option("--privacy_status", default="private", help="Video privacy status.")
+def upload_video_cli(file, title, description, category, keywords, privacy_status):
+    upload_request = YoutubeUploadRequest(
+        file=file,
+        title=title,
+        description=description,
+        category=category,
+        keywords=keywords,
+        privacy_status=privacy_status
+    )
+    upload_video(upload_request)
+
+
+if __name__ == "__main__":
+    upload_video_cli()
