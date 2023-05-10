@@ -43,6 +43,7 @@ def cli():
 @click.option("--keywords", help="Video keywords, comma separated", default="")
 @click.option("--privacy_status", default="private", help="Video privacy status.")
 def upload_to_youtube(file, client_secrets_file, title, description, category, keywords, privacy_status):
+    """Upload a video to Youtube."""
     upload_request = YoutubeUploadRequest(
         file=file,
         title=title,
