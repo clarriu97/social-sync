@@ -1,4 +1,26 @@
-"""Comand line interface for social_sync."""
+"""
+Comand line interface for social_sync.
+
+Usage:
+
+- Help:
+
+    ```bash
+        python -m social_sync.cli --help
+    ```
+
+- Help for a specific command:
+
+    ```bash
+        python -m social_sync.cli <command> --help
+    ```
+
+- Upload a video to Youtube:
+
+    ```bash
+        python -m social_sync.cli upload_to_youtube --file <video_file> --client_secrets_file <client_secrets_file>
+    ```
+"""
 import click
 
 from social_sync.distribute.youtube import upload_video as upload_youtube_video
