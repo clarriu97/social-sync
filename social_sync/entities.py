@@ -1,5 +1,5 @@
 """Data structures for social_sync"""
-from pydantic import BaseModel
+from pydantic import BaseModel  # pylint: disable=no-name-in-module
 
 from social_sync import youtube_categories
 
