@@ -30,44 +30,28 @@ RETRIABLE_EXCEPTIONS = (httplib2.HttpLib2Error, IOError)
 # codes is raised.
 RETRIABLE_STATUS_CODES = [500, 502, 503, 504]
 
-# The CLIENT_SECRETS_FILE variable specifies the name of a file that contains
-# the OAuth 2.0 information for this application, including its client_id and
-# client_secret. You can acquire an OAuth 2.0 client ID and client secret from
-# the Google API Console at
-# https://console.cloud.google.com/.
-# Please ensure that you have enabled the YouTube Data API for your project.
-# For more information about using OAuth2 to access the YouTube Data API, see:
-#   https://developers.google.com/youtube/v3/guides/authentication
-# For more information about the client_secrets.json file format, see:
-#   https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
-CLIENT_SECRETS_FILE = "client_secrets.json"
-
 # This OAuth 2.0 access scope allows an application to upload files to the
 # authenticated user's YouTube channel, but doesn't allow other types of access.
 YOUTUBE_UPLOAD_SCOPE = "https://www.googleapis.com/auth/youtube.upload"
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
 
-# This variable defines a message to display if the CLIENT_SECRETS_FILE is
-# missing.
-MISSING_CLIENT_SECRETS_MESSAGE = f"""
-WARNING: Please configure OAuth 2.0
+def _get_authenticated_service(upload_request: YoutubeUploadRequest):
+    MISSING_CLIENT_SECRETS_MESSAGE = f"""
+    WARNING: Please configure OAuth 2.0
 
-To make this sample run you will need to populate the client_secrets.json file
-found at:
+    To make this sample run you will need to populate the client_secrets.json file
+    found at:
 
-   {os.path.join(os.path.dirname(__file__), CLIENT_SECRETS_FILE)}
+    {os.path.join(os.path.dirname(__file__), upload_request.client_secrets_file)}
 
-with information from the API Console
-https://console.cloud.google.com/
+    with information from the API Console
+    https://console.cloud.google.com/
 
-For more information about the client_secrets.json file format, please visit:
-https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
-"""
-
-
-def _get_authenticated_service(args):
-    flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE,
+    For more information about the client_secrets.json file format, please visit:
+    https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
+    """
+    flow = flow_from_clientsecrets(upload_request.client_secrets_file,
                                    scope=YOUTUBE_UPLOAD_SCOPE,
                                    message=MISSING_CLIENT_SECRETS_MESSAGE)
 
@@ -75,7 +59,7 @@ def _get_authenticated_service(args):
     credentials = storage.get()
 
     if credentials is None or credentials.invalid:
-        credentials = run_flow(flow, storage, args)
+        credentials = run_flow(flow, storage, upload_request)
 
     return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
                  http=credentials.authorize(httplib2.Http()))
@@ -170,14 +154,16 @@ def upload_video(upload_request: YoutubeUploadRequest):
 @click.option("--category", default=youtube_categories.ENTERTAINMENT, help="Numeric video category. " + "See https://developers.google.com/youtube/v3/docs/videoCategories/list")
 @click.option("--keywords", help="Video keywords, comma separated", default="")
 @click.option("--privacy_status", default="private", help="Video privacy status.")
-def upload_video_cli(file, title, description, category, keywords, privacy_status):
+@click.option("--client_secrets_file", default="client_secrets.json", help="Absolute path to the client secrets JSON file")
+def upload_video_cli(file, title, description, category, keywords, privacy_status, client_secrets_file):
     upload_request = YoutubeUploadRequest(
         file=file,
         title=title,
         description=description,
         category=category,
         keywords=keywords,
-        privacy_status=privacy_status
+        privacy_status=privacy_status,
+        client_secrets_file=client_secrets_file
     )
     upload_video(upload_request)
 
