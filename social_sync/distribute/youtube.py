@@ -13,7 +13,6 @@ from oauth2client.file import Storage
 from oauth2client.tools import run_flow
 
 from social_sync.entities import YoutubeUploadRequest
-from social_sync import youtube_categories
 
 
 httplib2.RETRIES = 1
@@ -120,29 +119,3 @@ def upload_video(upload_request: YoutubeUploadRequest):
         _initialize_upload(youtube, upload_request)
     except HttpError as e:
         print(f"An HTTP error {e.resp.status} occurred:\n{e.content}")
-
-
-@click.command()
-@click.option("--file", required=True, help="Video file to upload")
-@click.option("--title", help="Video title", default="Test Title")
-@click.option("--description", help="Video description", default="Test Description")
-@click.option("--category", default=youtube_categories.ENTERTAINMENT,
-              help="Numeric video category. " + "See https://developers.google.com/youtube/v3/docs/videoCategories/list")
-@click.option("--keywords", help="Video keywords, comma separated", default="")
-@click.option("--privacy_status", default="private", help="Video privacy status.")
-@click.option("--client_secrets_file", default="client_secrets.json", help="Absolute path to the client secrets JSON file")
-def upload_video_cli(file, title, description, category, keywords, privacy_status, client_secrets_file):
-    upload_request = YoutubeUploadRequest(
-        file=file,
-        title=title,
-        description=description,
-        category=category,
-        keywords=keywords,
-        privacy_status=privacy_status,
-        client_secrets_file=client_secrets_file
-    )
-    upload_video(upload_request)
-
-
-if __name__ == "__main__":
-    upload_video_cli()
