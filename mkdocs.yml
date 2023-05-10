@@ -64,7 +64,7 @@ extra:
     - icon: fontawesome/brands/twitter
       link: https://twitter.com
     - icon: fontawesome/brands/youtube
-      link: https://www.youtube.com/channel/UCF6Brc4lIZfoEk_tB_UlIAQ
+      link: https://www.youtube.com/channel
 
 extra_css:
   - assets/stylesheets/extra.css
