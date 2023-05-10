@@ -1,6 +1,6 @@
+"""Youtube module"""
 import httplib2
 import os
-import random
 import sys
 import time
 
@@ -146,8 +146,7 @@ def resumable_upload(insert_request):
             if retry > MAX_RETRIES:
                 exit("No longer attempting to retry.")
 
-            max_sleep = 2 ** retry
-            sleep_seconds = random.random() * max_sleep
+            sleep_seconds = 2
             print(f"Sleeping {sleep_seconds} seconds and then retrying...")
             time.sleep(sleep_seconds)
 
