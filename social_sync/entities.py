@@ -4,7 +4,43 @@ from pydantic import BaseModel  # pylint: disable=no-name-in-module
 from social_sync import youtube_categories
 
 
-class YoutubeUploadRequest(BaseModel):
+class Request(BaseModel):
+    """
+    Base request class.
+
+    Parameters
+    ----------
+    file : str
+        Video file to upload.
+    """
+    file: str
+
+
+class TwitterUploadRequest(Request):
+    """
+    Twitter data structure to upload a video.
+
+    Parameters
+    ----------
+    apikey : str
+        Twitter API key.
+    apikey_secret : str
+        Twitter API key secret.
+    access_token : str
+        Twitter access token.
+    access_token_secret : str
+        Twitter access token secret.
+    status : str
+        The text of your tweet.
+    """
+    apikey: str
+    apikey_secret: str
+    access_token: str
+    access_token_secret: str
+    status: str
+
+
+class YoutubeUploadRequest(Request):
     """
     Youtube data structure to upload a video.
 
@@ -20,8 +56,6 @@ class YoutubeUploadRequest(BaseModel):
         Video keywords, comma separated, by default ""
     privacy : str, optional
         Video privacy status, by default "private"
-    file : str
-        Video file to upload.
     client_secrets_file : str
         Absolute path to the client secrets JSON file.
     logging_level : str, optional
@@ -38,7 +72,6 @@ class YoutubeUploadRequest(BaseModel):
     category: int = youtube_categories.ENTERTAINMENT
     keywords: str = ""
     privacy: str = "private"
-    file: str
     client_secrets_file: str
     logging_level: str = "ERROR"
     auth_host_name: str = "localhost"
